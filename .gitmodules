@@ -1,0 +1,3 @@
+[submodule "overlay.oxalica"]
+	path = overlay.oxalica
+	url = https://github.com/oxalica/rust-overlay.git
