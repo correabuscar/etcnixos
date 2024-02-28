@@ -173,7 +173,7 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
 neovim
     wget
-nano
+#nano #FIXME: this gets installed anyway! and EDITOR=nano too!
 mc
 git
 jetbrains.rust-rover
@@ -196,6 +196,9 @@ mlocate
   #targets = [ "arm-unknown-linux-gnueabihf" ];
 }))
   ]; # env
+
+  #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
+  environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
 
 fileSystems."/home/user/vm" = {
 	fsType = "vboxsf";
