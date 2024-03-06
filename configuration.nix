@@ -6,14 +6,16 @@
 
 {
   nixpkgs.overlays = [
-    (import ./overlayu)
     (import ./overlay.oxalica) #direct git clone of https://github.com/oxalica/rust-overlay.git
+    (import ./overlayu)
 #    [ pkgs.overlays.github {
 #    owner = "oxalica";
 #    repo = "/home/user/overlays/oxalica/rust-overlay";
 #    rev = "master";
 #    }
 #    ]
+
+    (import ./ccache_overlay)
   ];
 
   imports =
@@ -30,6 +32,9 @@
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = false;
+  boot.tmp.cleanOnBoot = true;
+  boot.tmp.useTmpfs = true;
+  boot.tmp.tmpfsSize = "70%";
   boot.kernelParams = [
   "ipv6.disable=1"
   "ipv6.disable_ipv6=1"
@@ -162,6 +167,8 @@
 #    "${system.buildInputs.rustPackages.rustDocs}/share/doc/rust/html/index.html";
 #  }
   environment.shellAliases = {
+    cp="cp -i";
+    mv="mv -i";
     v = "nvim";
     rustupdoc="firefox /run/current-system/sw/share/doc/rust/html/index.html";
     #rustupdoc = "firefox $(rustDocPath)";
@@ -191,20 +198,113 @@ mlocate
 #  (mlocate.overrideAttrs (oldAttrs: rec { #works 
 #      makeFlags = oldAttrs.makeFlags or [] ++ [ "groupname=users" ]; #ie. use root:users instead of root:mlocate when chowning /var/cache/locatedb at the end of scanning! ie. gets rid of error:  updatedb: can not find group `mlocate'
 #  }))
+
+#this rust-bin stuff uses oxalica's overlay
 (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
   extensions = [ "rust-src" "rust-docs" "rustc-docs" ];
   #targets = [ "arm-unknown-linux-gnueabihf" ];
 }))
+#rust-bin.stable."1.75.0".default  #1.75.0 but can't do -Z
+#rust-bin.nightly."2023-12-28".default  #1.75.0 nightly (55 files) no warn
+#rust-bin.nightly."2024-02-08".default #1.76.0 nightly (54 files) no warn
+#rust-bin.nightly."2024-02-28".default #1.78.0 nightly (57 files) + warning: the item `libc` is imported redundantly
+
+keepassxc
+
+gcc
+clang
+
+#glxinfo
+#pkg-config
+#pkgconf
+#xorg.libX11.dev
+#xorg.libXcursor.dev
+#xorg.libXrandr.dev
+#xorg.libXi.dev
+#xorg.libXext.dev
+#xorg.libXxf86vm.dev
+#xorg.libXft.dev
+#xorg.libXinerama.dev
+#xorg.libXmu.dev
+#xorg.libXtst
+#xorg.libXrender.dev
+#xorg.libXpresent
+#xorg.libXScrnSaver
+#xorg.libXt.dev
+libGL.dev
+libGL
+glew-egl
+#freeglut
+#nix-index
+
+colordiff
+vbindiff
+glxinfo
+xfce.mousepad
+  file
   ]; # env
 
+  #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
+  services.xserver.videoDrivers = [
+##default:
+#"vmware"
+#"virtualbox"
+#"modesetting"
+##enddefault
+
+  "vmware"
+  "virtualbox"
+  "modesetting"
+  "fbdev"
+  "virtio"
+  ];
+  nix = {
+    package = pkgs.nixVersions.stable;
+    extraOptions = ''
+      experimental-features = nix-command flakes
+    '';
+    settings = {
+      sandbox = true;
+      trusted-users = [ "root" "user" ];
+      auto-optimise-store = true;
+      extra-sandbox-paths = [ config.programs.ccache.cacheDir ];# needed for ccache
+    };
+
+  };
+
+  #for a guest quemu:
+  boot.kernelModules = ["vfio-pci"];
+  #virtualisation.videoDrivers = [ "virtio" ]; #not a thing
+  services.qemuGuest.enable = true;
+  #virtualisation.qemu.virtioKeyboard=true;
+#  virtualisation.qemu= {
+#    virtioKeyboard =true; #presumable if this nixos is guest OS, needs this to have keyboard (untested if it doesn't without this)
+#  };
+  virtualisation.virtualbox = {
+    host = {
+      enable=false;
+    };
+    guest = {
+      enable = true;
+      x11 = true;
+    };
+  };
+
+  programs.ccache.enable = true;
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
+  programs.bash.interactiveShellInit=''
+  HISTCONTROL=ignorespace
+  HISTFILESIZE=-1
+  HISTSIZE=-1
+  HISTTIMEFORMAT='%F %T '
+  '';
 
-fileSystems."/home/user/vm" = {
-	fsType = "vboxsf";
-	device = "vm";
-	options = [ "rw" "nofail" ];
-};
+  fileSystems."/home/user/vm" = {
+    fsType = "vboxsf";
+    device = "vm";
+    options = [ "rw" "nofail" ];
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
