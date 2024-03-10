@@ -23,13 +23,52 @@ self: super:
       });
       };
 
-  keepassxc = super.keepassxc.overrideAttrs (oldAttrs: {
+  keepassxc = (super.keepassxc.override { cmake = self.cmake2; }).overrideAttrs (oldAttrs: {
     patches = oldAttrs.patches or [] ++ [
       ./patches/0100_unhide_after_autotype.patch
+      #./ is "A path relative to the file containing this Nix expression"
     ];
-    doCheck = false;
+    doCheck = false; #tests? at least one fails due to patch!
+    patchPhase = oldAttrs.patchPhase or "" + ''
+    '';
+    preConfigurePhase = oldAttrs.preConfigurePhase or "" + ''
+    export CMAKE_VERBOSE_MAKEFILE=ON
+    export CMAKE_BUILD_TYPE=Debug
+    export CMAKE_DEBUG_TARGET_PROPERTIES=YES
+    export CMAKE_EXPORT_COMPILE_COMMANDS=YES
+    #export CMAKE_MESSAGE_LOG_LEVEL=DEBUG  #unsure if it worked
+    export CMAKE_MESSAGE_LOG_LEVEL=VERBOSE
+    '';
+		buildPhase = ''
+    echo "Build phase starting... failing on purpose"
+    exit 1
+    '';
+    #cmake=self.cmake2; #XXX can't use this here due to it's not an attr, even tho it compiles fine/no errs/warns!
   });
 
+  cmake2 = super.cmake.overrideAttrs (oldAttrs: {
+    patches = oldAttrs.patches or [] ++ [
+      ./patches/0100_cmake_unpaired_square_brackets.patch
+      #./ is "A path relative to the file containing this Nix expression"
+    ];
+    #doCheck = false; #tests?
+#    patchPhase = oldAttrs.patchPhase or "" + ''
+#    export CMAKE_VERBOSE_MAKEFILE=ON
+#    export CMAKE_BUILD_TYPE=Debug
+#    export CMAKE_DEBUG_TARGET_PROPERTIES=YES
+#    export CMAKE_EXPORT_COMPILE_COMMANDS=YES
+#    export CMAKE_MESSAGE_LOG_LEVEL=DEBUG
+#    '';
+    #export CMAKE_MESSAGE_LOG_LEVEL=VERBOSE
+#		buildPhase = ''
+#    echo "Build phase starting... failing on purpose"
+#    exit 1
+#    '';
+  });
+
+#	keepassxc = super.keepassxc.overrideAttrs (oldAttrs: {
+#		installPhase = "";
+#	});
 
 #ok well, oxilica has bin rusts so the patch is useless
 #  rust-bin = super.rust-bin // {
@@ -193,4 +232,4 @@ self: super:
 
 } #self/super
 
-# vim: set tabstop=2 shiftwidth=2 expandtab :
+# vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab :

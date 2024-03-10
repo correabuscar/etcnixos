@@ -2,10 +2,12 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  nixpkgs.overlays = [
+  nixpkgs.overlays = lib.mkBefore [ # XXX: this is the default behavior without the lib.mkAfter
+  #nixpkgs.overlays = lib.mkAfter [ # XXX: required or else it's the opposite of how it work from 'nix-build' command
+  #nixpkgs.overlays = [
     (import ./overlay.oxalica) #direct git clone of https://github.com/oxalica/rust-overlay.git
     (import ./overlayu)
 #    [ pkgs.overlays.github {
@@ -15,7 +17,8 @@
 #    }
 #    ]
 
-    (import ./ccache_overlay)
+    #(import ./ccache_overlay { inherit config lib pkgs; }) #if mkBefore, then this overlay gets overriden by the /etc/nixos/nixpkgs/nixos/modules/programs/ccache.nix
+    (import ./ccache_overlay) #if mkBefore, then this overlay gets overriden by the /etc/nixos/nixpkgs/nixos/modules/programs/ccache.nix
   ];
 
   imports =
@@ -177,6 +180,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
 neovim
     wget
@@ -210,9 +214,12 @@ mlocate
 #rust-bin.nightly."2024-02-28".default #1.78.0 nightly (57 files) + warning: the item `libc` is imported redundantly
 
 keepassxc
+#(keepassxc.overrideAttrs(old: {NIX_DEBUG=13;})) #this affects build for keepassxc only! so this is how to set NIX_DEBUG so far!
 
 gcc
 clang
+
+bc
 
 #glxinfo
 #pkg-config
@@ -242,6 +249,19 @@ vbindiff
 glxinfo
 xfce.mousepad
   file
+ripgrep
+ccache
+#  # other packages...
+#  (pkgs.buildEnv {
+#    name = "my-build-env";
+#    paths = [ ]; #need to pass this else error
+##    variables = {
+##      NIX_DEBUG = "10";
+##    };
+#      passthru = {
+#      NIX_DEBUG="10"; #no effect
+#      };
+#    })
   ]; # env
 
   #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
@@ -290,9 +310,13 @@ xfce.mousepad
     };
   };
 
-  programs.ccache.enable = true;
+  #programs.ccache.packageNames = [ "ffmpeg" ]; #"keepassxc" ]; //recompiled a lot of shie from source!
+  programs.ccache.packageNames = [ "keepassxc" ]; #if pkg is in this list then it's using ccache regardless of programs.ccache.enable flag state below.
+  programs.ccache.enable = true; #doesn't affect anything
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
+  environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
+  #NIX_DEBUG="12"; #won't work error
   programs.bash.interactiveShellInit=''
   HISTCONTROL=ignorespace
   HISTFILESIZE=-1

@@ -3,7 +3,9 @@ _/- //so that an alt+tab would focus it, (qt4 keepassx only via showNormal())
  \- focused(with this patch) - can't show it unfocused, it will focus it no matter what!
 
 rather than (w/o this patch) having to find it in taskbar and clicking on it to unminimize it!
-(alt+tab also not working as it puts it last in list, so alt+shift+tab would work!)
+          (alt+tab also not working as it puts it last in list, so alt+shift+tab would work!)
+          1
+          23012345678
 
 doc: https://doc.qt.io/qt-5/qwidget.html
 
