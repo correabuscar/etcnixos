@@ -457,7 +457,7 @@ ccache
       iptables -A OUTPUT -p udp --dport 53 -d 10.0.2.3 -j ACCEPT
 #      iptables -A OUTPUT -p udp --dport 443 -j ACCEPT
       iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
-      iptables -A TCP -p tcp --dport 22 -j ACCEPT
+      iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 #      iptables -A OUTPUT -p tcp -d nixos.org --dport 443 -j ACCEPT #it won't resolve at all!
 
       iptables -A OUTPUT -o lo -s 127.0.0.1/8 -d 127.0.0.1/8 -j ACCEPT  #NOTE that on INPUT all 0/0 is accepted on 'lo'
