@@ -23,32 +23,40 @@ self: super:
       });
       };
 
-  keepassxc = (super.keepassxc.override { cmake = self.cmake2; }).overrideAttrs (oldAttrs: {
+  keepassxc = (super.keepassxc.override { 
+      cmake = self.cmake4;
+      }).overrideAttrs (oldAttrs: {
+    #NIX_DEBUG=13; #untested
     patches = oldAttrs.patches or [] ++ [
       ./patches/0100_unhide_after_autotype.patch
       #./ is "A path relative to the file containing this Nix expression"
     ];
     doCheck = false; #tests? at least one fails due to patch!
-    patchPhase = oldAttrs.patchPhase or "" + ''
-    '';
-    preConfigurePhase = oldAttrs.preConfigurePhase or "" + ''
-    export CMAKE_VERBOSE_MAKEFILE=ON
-    export CMAKE_BUILD_TYPE=Debug
-    export CMAKE_DEBUG_TARGET_PROPERTIES=YES
-    export CMAKE_EXPORT_COMPILE_COMMANDS=YES
-    #export CMAKE_MESSAGE_LOG_LEVEL=DEBUG  #unsure if it worked
-    export CMAKE_MESSAGE_LOG_LEVEL=VERBOSE
-    '';
-		buildPhase = ''
-    echo "Build phase starting... failing on purpose"
-    exit 1
-    '';
+#    patchPhase = oldAttrs.patchPhase or "" + ''
+#    '';
+#    preConfigurePhase = oldAttrs.preConfigurePhase or "" + ''
+#    export CMAKE_VERBOSE_MAKEFILE=ON
+#    export CMAKE_BUILD_TYPE=Debug
+#    export CMAKE_DEBUG_TARGET_PROPERTIES=YES
+#    export CMAKE_EXPORT_COMPILE_COMMANDS=YES
+#    #export CMAKE_MESSAGE_LOG_LEVEL=DEBUG  #unsure if it worked
+#    export CMAKE_MESSAGE_LOG_LEVEL=VERBOSE
+#    '';
+#		glibPreInstallPhase = oldAttrs.glibPreInstallPhase or "" + ''
+#    echo "glibPreInstallPhase phase starting... failing on purpose"
+#    exit 1
+#    '';
+#		buildPhase = oldAttrs.buildPhase or "" + ''
+#    echo "Build phase starting... failing on purpose"
+#    exit 1
+#    '';
     #cmake=self.cmake2; #XXX can't use this here due to it's not an attr, even tho it compiles fine/no errs/warns!
   });
 
   cmake2 = super.cmake.overrideAttrs (oldAttrs: {
     patches = oldAttrs.patches or [] ++ [
       ./patches/0100_cmake_unpaired_square_brackets.patch
+      ./patches/0200_cmake_fail_not_just_warn.patch
       #./ is "A path relative to the file containing this Nix expression"
     ];
     #doCheck = false; #tests?
@@ -64,6 +72,22 @@ self: super:
 #    echo "Build phase starting... failing on purpose"
 #    exit 1
 #    '';
+  });
+  cmake3 = super.cmake.overrideAttrs (oldAttrs: { #confirmed fail
+    patches = oldAttrs.patches or [] ++ [
+      ./patches/0100_cmake_unpaired_square_brackets_first_half.patch
+      #./patches/0100_cmake_unpaired_square_brackets_second_half.patch
+      ./patches/0200_cmake_fail_not_just_warn.patch
+      #./ is "A path relative to the file containing this Nix expression"
+    ];
+  });
+  cmake4 = super.cmake.overrideAttrs (oldAttrs: { #works only with this! but it's not the same .cmake file contents as with cmake2
+    patches = oldAttrs.patches or [] ++ [
+      #./patches/0100_cmake_unpaired_square_brackets_first_half.patch
+      ./patches/0100_cmake_unpaired_square_brackets_second_half.patch
+      ./patches/0200_cmake_fail_not_just_warn.patch
+      #./ is "A path relative to the file containing this Nix expression"
+    ];
   });
 
 #	keepassxc = super.keepassxc.overrideAttrs (oldAttrs: {
