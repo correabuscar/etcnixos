@@ -24,7 +24,7 @@ self: super:
       };
 
   keepassxc = (super.keepassxc.override { 
-      cmake = self.cmake4;
+      cmake = self.cmake2;
       }).overrideAttrs (oldAttrs: {
     #NIX_DEBUG=13; #untested
     patches = oldAttrs.patches or [] ++ [
