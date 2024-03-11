@@ -446,7 +446,9 @@ ccache
       iptables -A OUTPUT -p icmp -j ACCEPT #TODO: allow all for now.
 
       iptables -N TCP || iptables -F TCP #create or flush the 'TCP'(named) chain - both are needed else fail or appending to prev. ones!
+#FIXME: this 443 has to be in two places, one here and one in OUTPUT, see why
       iptables -A TCP -p tcp --dport 443 -j ACCEPT
+      iptables -A TCP -p tcp --dport 22 -j ACCEPT
       iptables -A TCP -j LOG --log-prefix "TCPchaindropped:" --log-level 7 --log-uid
       iptables -A TCP -i lo -s 127.0.0.1/8 -d 127.0.0.1/8 -j ACCEPT  #NOTE that on INPUT all 0/0 is accepted on 'lo' if it were to reach nixos-fw chain but it reaches TCP one instead now.
       iptables -A TCP -j DROP
@@ -455,6 +457,7 @@ ccache
       iptables -A OUTPUT -p udp --dport 53 -d 10.0.2.3 -j ACCEPT
 #      iptables -A OUTPUT -p udp --dport 443 -j ACCEPT
       iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+      iptables -A TCP -p tcp --dport 22 -j ACCEPT
 #      iptables -A OUTPUT -p tcp -d nixos.org --dport 443 -j ACCEPT #it won't resolve at all!
 
       iptables -A OUTPUT -o lo -s 127.0.0.1/8 -d 127.0.0.1/8 -j ACCEPT  #NOTE that on INPUT all 0/0 is accepted on 'lo'
