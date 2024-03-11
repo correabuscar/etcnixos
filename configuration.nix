@@ -62,7 +62,7 @@
   "noexec=on"
   "nohibernate"
   "consoleblank=120"
-  "mitigations=on"
+  #"mitigations=on" #only =off is a thing here! else assumed =on but =on itself doesn't work: `Unsupported mitigations=on, system may still be vulnerable`
   "rd.log=all"
   "noefi"
   "cpuidle.governor=menu"
@@ -83,7 +83,7 @@
   "memtest=3"
   ];
 
-  networking.hostName = "mehost"; # Define your hostname.
+  networking.hostName = "vbox1"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   networking.wireless.enable = false;  # Enables wireless support via wpa_supplicant.
 
@@ -151,16 +151,20 @@
   services.xserver.displayManager.gdm.wayland = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.user = {
-    isNormalUser = true;
-    description = "user";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      firefox
-      kate
-    #  thunderbird
-    ];
-  };
+	users.defaultUserShell = pkgs.bash;
+	users.users = {
+		user = {
+			useDefaultShell = true; #If true, the user’s shell will be set to users.defaultUserShell.
+			isNormalUser = true;
+			description = "user";
+			extraGroups = [ "networkmanager" "wheel" ];
+			packages = with pkgs; [
+				firefox
+					kate
+#  thunderbird
+			];
+		};
+	};
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -220,6 +224,7 @@ gcc
 clang
 
 bc
+ethtool
 
 #glxinfo
 #pkg-config
@@ -316,13 +321,29 @@ ccache
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
   environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
+  environment.memoryAllocator.provider="jemalloc";
+  #The system-wide memory allocator.
+	#
+	#Briefly, the system-wide memory allocator providers are:
+	#
+	#    libc: the standard allocator provided by libc
+	#    graphene-hardened: An allocator designed to mitigate memory corruption attacks, such as those caused by use-after-free bugs.
+	#    jemalloc: A general purpose allocator that emphasizes fragmentation avoidance and scalable concurrency support.
+	#    mimalloc: A compact and fast general purpose allocator, which may optionally be built with mitigations against various heap vulnerabilities.
+	#    scudo: A user-mode allocator based on LLVM Sanitizer’s CombinedAllocator, which aims at providing additional mitigations against heap based vulnerabilities, while maintaining good performance.
+	#
+	#Selecting an alternative allocator (i.e., anything other than libc) may result in instability, data loss, and/or service failure.
+	#
   #NIX_DEBUG="12"; #won't work error
-  programs.bash.interactiveShellInit=''
-  HISTCONTROL=ignorespace
-  HISTFILESIZE=-1
-  HISTSIZE=-1
-  HISTTIMEFORMAT='%F %T '
-  '';
+	programs.bash = {
+		#enable=true; #        - The option definition `programs.bash.enable' in `/etc/nixos/configuration.nix' no longer has any effect; please remove it.
+		interactiveShellInit=''
+			HISTCONTROL=ignorespace
+			HISTFILESIZE=-1
+			HISTSIZE=-1
+			HISTTIMEFORMAT='%F %T '
+			'';
+	};
 
   fileSystems."/home/user/vm" = {
     fsType = "vboxsf";
@@ -352,6 +373,53 @@ ccache
       localuser = null; #this works only if above is used, and silences this: updatedb: can not find group `mlocate' // not true, this isn't needed! it's only to get rid of a red warning saying this isn't used!
     };
   };
+
+	systemd = {
+		user = {
+			services = {
+				user_startup = { #initial code from unkn
+					enable = true; # you still have to `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
+					#wantedBy = [ "multi-user.target" "suspend.target" ];
+					wantedBy = [ "default.target" ];
+					#after = [ "multi-user.target" "acpid.service" "suspend.target" ];
+					description = "user-level startup stuff";
+					path = [ pkgs.bash ];
+
+					serviceConfig = {
+						Type = "oneshot";
+						RemainAfterExit = "yes";
+						ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
+						#ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
+            #nix-repl> :p pkgs.bash
+            #«derivation /nix/store/dynj352jjy6921i1kpbdq7bp7mymm5p3-bash-5.2p26.drv»
+            #
+            #nix-repl> :p "${pkgs.bash}/bin/bash"
+            #"/nix/store/087167dfxal194pm54cmcbbxsfy3cjgn-bash-5.2p26/bin/bash"
+            #
+            #nix-repl> :p pkgs.runtimeShell
+            #"/nix/store/087167dfxal194pm54cmcbbxsfy3cjgn-bash-5.2p26/bin/bash"
+            #
+            #
+					};
+				};
+			};
+		}; #user services
+		services = { # system-wide services
+			mine = { # initial code from unkn
+				enable = false;
+				wantedBy = [ "multi-user.target" "suspend.target" ];
+				after = [ "multi-user.target" "acpid.service" "suspend.target" ];
+				description = "My global startup stuff";
+				path = [ pkgs.bash ];
+
+				serviceConfig = {
+					Type = "oneshot";
+					RemainAfterExit = "yes";
+					ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_system_startup.bash'";
+				};
+			};
+		}; # system-wide services
+	};
 
   # Open ports in the firewall.
   # Or disable the firewall altogether.
