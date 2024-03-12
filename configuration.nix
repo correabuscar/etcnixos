@@ -386,6 +386,10 @@ ccache
 					path = [ pkgs.bash ];
 
 					serviceConfig = {
+            #FIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea: 
+            #these two make no difference apparently
+            #StandardOutput = "journal";
+            #StandardError = "journal";
 						Type = "oneshot";
 						RemainAfterExit = "yes";
 						ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
@@ -405,17 +409,18 @@ ccache
 			};
 		}; #user services
 		services = { # system-wide services
-			mine = { # initial code from unkn
-				enable = false;
+			system_startup = { # initial code from unkn
+      #oknvmdelayediguessFIXME: so far this shows its log on `journalctl -u system_startup.service` and on `systemctl status system_startup`
+				enable = true;
 				wantedBy = [ "multi-user.target" "suspend.target" ];
 				after = [ "multi-user.target" "acpid.service" "suspend.target" ];
 				description = "My global startup stuff";
-				path = [ pkgs.bash ];
+				path = [ pkgs.bash pkgs.ethtool ];
 
 				serviceConfig = {
 					Type = "oneshot";
 					RemainAfterExit = "yes";
-					ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_system_startup.bash'";
+					ExecStart = "${pkgs.runtimeShell} -c '/_system_startup.bash'";
 				};
 			};
 		}; # system-wide services
