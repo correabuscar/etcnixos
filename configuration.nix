@@ -385,6 +385,9 @@ ccache
 					description = "user-level startup stuff";
 					path = [ pkgs.bash ];
 
+#          environment = {
+#            LANG="en_US.UTF-8";
+#          };
 					serviceConfig = {
             #FIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea: 
             #these two make no difference apparently
@@ -412,8 +415,9 @@ ccache
 			system_startup = { # initial code from unkn
       #oknvmdelayediguessFIXME: so far this shows its log on `journalctl -u system_startup.service` and on `systemctl status system_startup`
 				enable = true;
-				wantedBy = [ "multi-user.target" "suspend.target" ];
-				after = [ "multi-user.target" "acpid.service" "suspend.target" ];
+				wantedBy = [ "multi-user.target" "network.target" ]; #"suspend.target" ];
+				after = [ "multi-user.target" ]; #"acpid.service" "suspend.target" ];
+        before = [ "sys-subsystem-net-devices-enp0s3.device" ];
 				description = "My global startup stuff";
 				path = [ pkgs.bash pkgs.ethtool ];
 
