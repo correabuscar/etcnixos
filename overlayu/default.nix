@@ -7,10 +7,12 @@ self: super:
 
   jetbrains = super.jetbrains // {
   rust-rover = super.jetbrains.rust-rover.overrideAttrs (oldAttrs: rec {
-      build_number = "233.14015.153";
+      #build_number = "233.14015.153";
+      build_number = "233.14015.155";
       src = self.fetchurl {
       url = "https://download.jetbrains.com/rustrover/RustRover-${build_number}.tar.gz";
-      sha256 = "e3b70ee54bd6ff2ac900400ebdf8ae2c10c4206e51d3b52c1c68bd4f56244f1c";
+      #sha256 = "e3b70ee54bd6ff2ac900400ebdf8ae2c10c4206e51d3b52c1c68bd4f56244f1c"; #233.14015.153
+      sha256 = "51b6db1563d68326bd7c8defe1f6c04b428e1a592d06579edfeb0feb60c45077";
       };
 #      patches = [ ]; #FIXME: ./fookmi.patch ];
 #      postPatch = ''
@@ -18,6 +20,9 @@ self: super:
 #      ${oldAttrs.postPatch}
 #      mv plugins/remote-dev-server.tmp plugins/remote-dev-server
 #      '';
+
+      # replaceStrings from to s - Given string s, replace every occurrence of the strings in from with the corresponding string in to.
+      #see https://nixos.org/manual/nix/stable/language/builtins.html#builtins-replaceStrings
       postFixup = builtins.replaceStrings [ "patchelf --set-interpreter" ]
       ["# patchelf --set-interpreter" ] (oldAttrs.postFixup or "");
       });
