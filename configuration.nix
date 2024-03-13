@@ -435,8 +435,8 @@ ccache
             #but it's bash -c 'thescript' hmm
 
 						#ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'"; #XXX: don't use this, u won't see stdout/stderr in journalctl,status (u've to not prefix with bash -c) only when u 'restart' it manually u see it, but not when it first starts up like after a reboot!
-						ExecStart = ''"/home/user/bin/_user_startup.bash"'';
-            #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too!
+						ExecStart = ''"/home/user/bin/_user startup.bash"'';
+            #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too! CONFIRMED!
 						#ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
             #nix-repl> :p pkgs.bash
             #«derivation /nix/store/dynj352jjy6921i1kpbdq7bp7mymm5p3-bash-5.2p26.drv»
