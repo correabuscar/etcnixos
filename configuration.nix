@@ -284,6 +284,20 @@ ccache
   "virtio"
   ];
   nix = {
+    nixPath= #'' #XXX: to see this updated for user you've to relog.
+    #XXX: if you comment out the setting of this nixPath, then you get the default NIX_PATH and you're stuck unless you set it temporarily, for `nixos-rebuild switch` as root.
+      if config.nix.channel.enable
+        then [
+          #"/root/.nix-defexpr/channels" #XXX this prefixes the resulting path! for root!
+          #"/home/user/.nix-defexpr/channels" #XXX for (non-root)user it's this that prefixes NIX_PATH
+
+          #"nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
+          "nixpkgs=/etc/nixos/nixpkgs"
+          "nixos-config=/etc/nixos/configuration.nix"
+          #"/nix/var/nix/profiles/per-user/root/channels"
+        ]
+      else [];
+    #'';
     package = pkgs.nixVersions.stable;
     extraOptions = ''
       experimental-features = nix-command flakes
@@ -378,24 +392,51 @@ ccache
 		user = {
 			services = {
 				user_startup = { #initial code from unkn
-					enable = true; # you still have to `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
+					enable = true;
+					# nvm you don't! //old: you still have to(do I? apparently not, let's test) `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
+          #//old: noXXX: if you change it, apparently you've to `$ systemctl --user disable user_startup` manually, before it ever sees your updated one. By "change" I mean for example switching between 'script =' and 'ExecStart =' (since you can only use one at a time)
+          #Interesting, so I shouldn't have to 'enable' it, I don't remember why it was ever needed in the first place:
+          #$ systemctl --user disable user_startup
+					#Removed "/home/user/.config/systemd/user/default.target.wants/user_startup.service".
+					#Removed "/home/user/.config/systemd/user/user_startup.service".
+					#The following unit files have been enabled in global scope. This means
+					#they will still be started automatically after a successful disablement
+					#in user scope:
+					#user_startup.service
+					#So then it doesn't need anything in /home/user/.config/systemd/user/  because it's in /etc/systemd/user/user_startup.service
+					#now let's see if it runs after reboot, it runs but it doesn't log stdout/stderr!
+
 					#wantedBy = [ "multi-user.target" "suspend.target" ];
 					wantedBy = [ "default.target" ];
 					#after = [ "multi-user.target" "acpid.service" "suspend.target" ];
 					description = "user-level startup stuff";
 					path = [ pkgs.bash ];
+          #XXX: stdout/stderr work fine when using script= here
+          #script = ''
+          #export
+          #'';
 
 #          environment = {
 #            LANG="en_US.UTF-8";
 #          };
 					serviceConfig = {
-            #FIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea: 
             #these two make no difference apparently
             #StandardOutput = "journal";
             #StandardError = "journal";
 						Type = "oneshot";
 						RemainAfterExit = "yes";
-						ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
+            #soledFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's due to bash -c 'script' instead of just 'script'(which has bash shebang anyway)
+            #done(seeabove)doneFIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea. 
+            #the difference between the two is:
+            #-ExecStart=/nix/store/dnziqfv7lmcdy1ns173xib1p5vrbamr2-unit-script-user_startup-start/bin/user_startup-start
+            #^ has this shebang: #!/nix/store/4vzal97iq3dmrgycj8r0gflrh51p8w1s-bash-5.2p26/bin/bash
+            #+ExecStart=/nix/store/4vzal97iq3dmrgycj8r0gflrh51p8w1s-bash-5.2p26/bin/bash -c '/home/user/bin/_user_startup.bash'
+            #^ has this shebang: #!/usr/bin/env bash
+            #but it's bash -c 'thescript' hmm
+
+						#ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'"; #XXX: don't use this, u won't see stdout/stderr in journalctl,status (u've to not prefix with bash -c) only when u 'restart' it manually u see it, but not when it first starts up like after a reboot!
+						ExecStart = ''"/home/user/bin/_user_startup.bash"'';
+            #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too!
 						#ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
             #nix-repl> :p pkgs.bash
             #«derivation /nix/store/dynj352jjy6921i1kpbdq7bp7mymm5p3-bash-5.2p26.drv»
