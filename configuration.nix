@@ -481,9 +481,13 @@ ccache
       #allowedTCPPorts = [ 443 ];
       #allowedUDPPorts = [ 443 ];
       logRefusedConnections = true;
-      extraStopCommands = "iptables -P OUTPUT DROP
+      extraStopCommands = ''
+        iptables -P OUTPUT DROP
         iptables -P INPUT DROP
-        iptables -P FORWARD DROP";
+        iptables -P FORWARD DROP
+        iptables -I OUTPUT -s 127.0.0.1/8 -o lo -d 127.0.0.1/8 -j ACCEPT
+        iptables -I INPUT -i lo -s 127.0.0.1/8 -d 127.0.0.1/8 -j ACCEPT
+        '';
       pingLimit = "--limit 1/minute --limit-burst 5";
       allowPing = true;
 #      iptables -A OUTPUT -p udp -d nixos.org --dport 443 -j ACCEPT
