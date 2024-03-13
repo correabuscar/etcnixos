@@ -151,20 +151,20 @@
   services.xserver.displayManager.gdm.wayland = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-	users.defaultUserShell = pkgs.bash;
-	users.users = {
-		user = {
-			useDefaultShell = true; #If true, the user’s shell will be set to users.defaultUserShell.
-			isNormalUser = true;
-			description = "user";
-			extraGroups = [ "networkmanager" "wheel" ];
-			packages = with pkgs; [
-				firefox
-					kate
+  users.defaultUserShell = pkgs.bash;
+  users.users = {
+    user = {
+      useDefaultShell = true; #If true, the user’s shell will be set to users.defaultUserShell.
+        isNormalUser = true;
+      description = "user";
+      extraGroups = [ "networkmanager" "wheel" ];
+      packages = with pkgs; [
+        firefox
+          kate
 #  thunderbird
-			];
-		};
-	};
+      ];
+    };
+  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -337,27 +337,27 @@ ccache
   environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
   environment.memoryAllocator.provider="jemalloc";
   #The system-wide memory allocator.
-	#
-	#Briefly, the system-wide memory allocator providers are:
-	#
-	#    libc: the standard allocator provided by libc
-	#    graphene-hardened: An allocator designed to mitigate memory corruption attacks, such as those caused by use-after-free bugs.
-	#    jemalloc: A general purpose allocator that emphasizes fragmentation avoidance and scalable concurrency support.
-	#    mimalloc: A compact and fast general purpose allocator, which may optionally be built with mitigations against various heap vulnerabilities.
-	#    scudo: A user-mode allocator based on LLVM Sanitizer’s CombinedAllocator, which aims at providing additional mitigations against heap based vulnerabilities, while maintaining good performance.
-	#
-	#Selecting an alternative allocator (i.e., anything other than libc) may result in instability, data loss, and/or service failure.
-	#
+  #
+  #Briefly, the system-wide memory allocator providers are:
+  #
+  #    libc: the standard allocator provided by libc
+  #    graphene-hardened: An allocator designed to mitigate memory corruption attacks, such as those caused by use-after-free bugs.
+  #    jemalloc: A general purpose allocator that emphasizes fragmentation avoidance and scalable concurrency support.
+  #    mimalloc: A compact and fast general purpose allocator, which may optionally be built with mitigations against various heap vulnerabilities.
+  #    scudo: A user-mode allocator based on LLVM Sanitizer’s CombinedAllocator, which aims at providing additional mitigations against heap based vulnerabilities, while maintaining good performance.
+  #
+  #Selecting an alternative allocator (i.e., anything other than libc) may result in instability, data loss, and/or service failure.
+  #
   #NIX_DEBUG="12"; #won't work error
-	programs.bash = {
-		#enable=true; #        - The option definition `programs.bash.enable' in `/etc/nixos/configuration.nix' no longer has any effect; please remove it.
-		interactiveShellInit=''
-			HISTCONTROL=ignorespace
-			HISTFILESIZE=-1
-			HISTSIZE=-1
-			HISTTIMEFORMAT='%F %T '
-			'';
-	};
+  programs.bash = {
+    #enable=true; #        - The option definition `programs.bash.enable' in `/etc/nixos/configuration.nix' no longer has any effect; please remove it.
+    interactiveShellInit=''
+      HISTCONTROL=ignorespace
+      HISTFILESIZE=-1
+      HISTSIZE=-1
+      HISTTIMEFORMAT='%F %T '
+      '';
+  };
 
   fileSystems."/home/user/vm" = {
     fsType = "vboxsf";
@@ -388,29 +388,29 @@ ccache
     };
   };
 
-	systemd = {
-		user = {
-			services = {
-				user_startup = { #initial code from unkn
-					enable = true;
-					# nvm you don't! //old: you still have to(do I? apparently not, let's test) `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
+  systemd = {
+    user = {
+      services = {
+        user_startup = { #initial code from unkn
+          enable = true;
+          # nvm you don't! //old: you still have to(do I? apparently not, let's test) `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
           #//old: noXXX: if you change it, apparently you've to `$ systemctl --user disable user_startup` manually, before it ever sees your updated one. By "change" I mean for example switching between 'script =' and 'ExecStart =' (since you can only use one at a time)
           #Interesting, so I shouldn't have to 'enable' it, I don't remember why it was ever needed in the first place:
           #$ systemctl --user disable user_startup
-					#Removed "/home/user/.config/systemd/user/default.target.wants/user_startup.service".
-					#Removed "/home/user/.config/systemd/user/user_startup.service".
-					#The following unit files have been enabled in global scope. This means
-					#they will still be started automatically after a successful disablement
-					#in user scope:
-					#user_startup.service
-					#So then it doesn't need anything in /home/user/.config/systemd/user/  because it's in /etc/systemd/user/user_startup.service
-					#now let's see if it runs after reboot, it runs but it doesn't log stdout/stderr!
+          #Removed "/home/user/.config/systemd/user/default.target.wants/user_startup.service".
+          #Removed "/home/user/.config/systemd/user/user_startup.service".
+          #The following unit files have been enabled in global scope. This means
+          #they will still be started automatically after a successful disablement
+          #in user scope:
+          #user_startup.service
+          #So then it doesn't need anything in /home/user/.config/systemd/user/  because it's in /etc/systemd/user/user_startup.service
+          #now let's see if it runs after reboot, it runs but it doesn't log stdout/stderr!
 
-					#wantedBy = [ "multi-user.target" "suspend.target" ];
-					wantedBy = [ "default.target" ];
-					#after = [ "multi-user.target" "acpid.service" "suspend.target" ];
-					description = "user-level startup stuff";
-					path = [ pkgs.bash ];
+          #wantedBy = [ "multi-user.target" "suspend.target" ];
+          wantedBy = [ "default.target" ];
+          #after = [ "multi-user.target" "acpid.service" "suspend.target" ];
+          description = "user-level startup stuff";
+          path = [ pkgs.bash ];
           #XXX: stdout/stderr work fine when using script= here
           #script = ''
           #export
@@ -419,12 +419,12 @@ ccache
 #          environment = {
 #            LANG="en_US.UTF-8";
 #          };
-					serviceConfig = {
+          serviceConfig = {
             #these two make no difference apparently
             #StandardOutput = "journal";
             #StandardError = "journal";
-						Type = "oneshot";
-						RemainAfterExit = "yes";
+            Type = "oneshot";
+            RemainAfterExit = "yes";
             #soledFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's due to bash -c 'script' instead of just 'script'(which has bash shebang anyway)
             #done(seeabove)doneFIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea. 
             #the difference between the two is:
@@ -434,10 +434,10 @@ ccache
             #^ has this shebang: #!/usr/bin/env bash
             #but it's bash -c 'thescript' hmm
 
-						#ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'"; #XXX: don't use this, u won't see stdout/stderr in journalctl,status (u've to not prefix with bash -c) only when u 'restart' it manually u see it, but not when it first starts up like after a reboot!
-						ExecStart = ''"/home/user/bin/_user startup.bash"'';
+            #ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'"; #XXX: don't use this, u won't see stdout/stderr in journalctl,status (u've to not prefix with bash -c) only when u 'restart' it manually u see it, but not when it first starts up like after a reboot!
+            ExecStart = ''"/home/user/bin/_user startup.bash"'';
             #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too! CONFIRMED!
-						#ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
+            #ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
             #nix-repl> :p pkgs.bash
             #«derivation /nix/store/dynj352jjy6921i1kpbdq7bp7mymm5p3-bash-5.2p26.drv»
             #
@@ -448,28 +448,28 @@ ccache
             #"/nix/store/087167dfxal194pm54cmcbbxsfy3cjgn-bash-5.2p26/bin/bash"
             #
             #
-					};
-				};
-			};
-		}; #user services
-		services = { # system-wide services
-			system_startup = { # initial code from unkn
+          };
+        };
+      };
+    }; #user services
+    services = { # system-wide services
+      system_startup = { # initial code from unkn
       #oknvmdelayediguessFIXME: so far this shows its log on `journalctl -u system_startup.service` and on `systemctl status system_startup`
-				enable = true;
-				wantedBy = [ "multi-user.target" "network.target" ]; #"suspend.target" ];
-				after = [ "multi-user.target" ]; #"acpid.service" "suspend.target" ];
+        enable = true;
+        wantedBy = [ "multi-user.target" "network.target" ]; #"suspend.target" ];
+        after = [ "multi-user.target" ]; #"acpid.service" "suspend.target" ];
         before = [ "sys-subsystem-net-devices-enp0s3.device" ];
-				description = "My global startup stuff";
-				path = [ pkgs.bash pkgs.ethtool ];
+        description = "My global startup stuff";
+        path = [ pkgs.bash pkgs.ethtool ];
 
-				serviceConfig = {
-					Type = "oneshot";
-					RemainAfterExit = "yes";
-					ExecStart = "${pkgs.runtimeShell} -c '/_system_startup.bash'";
-				};
-			};
-		}; # system-wide services
-	};
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = "yes";
+          ExecStart = "${pkgs.runtimeShell} -c '/_system_startup.bash'";
+        };
+      };
+    }; # system-wide services
+  };
 
   # Open ports in the firewall.
   # Or disable the firewall altogether.
