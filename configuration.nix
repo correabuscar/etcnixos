@@ -407,13 +407,24 @@ ccache
           #now let's see if it runs after reboot, it runs but it doesn't log stdout/stderr!
 
           #wantedBy = [ "multi-user.target" "suspend.target" ];
-          wantedBy = [ "default.target" ];
+          wantedBy = [ "basic.target" ];
+          after = [ "basic.target" "paths.target" "sockets.target" ];
+          wants = [ "basic.target" "paths.target" "sockets.target" ];
           #after = [ "multi-user.target" "acpid.service" "suspend.target" ];
+          #after = [ "systemd-journald.service" ]; #Failed to restart user_startup.service: Unit systemd-journald.service not found.
+          #requires = [ "systemd-journald.service" ]; #Failed to restart user_startup.service: Unit systemd-journald.service not found.
+          requires = [ 
+          #"multi-user.target" #won't start at all
+          "basic.target" "paths.target" "sockets.target" ];
           description = "user-level startup stuff";
-          path = [ pkgs.bash ];
-          #XXX: stdout/stderr work fine when using script= here
+          path = [ pkgs.bash pkgs.coreutils ];
+          #FIXME: stdout/stderr work just like the other variant: randomly! even when using script= here:
           #script = ''
+          #echo "hi this is '$0' on stdout"
+          #echo "hi this is '$0' on stderr" >&2
           #export
+          #echo "bye this is '$0' on stdout"
+          #echo "bye this is '$0' on stderr" >&2
           #'';
 
 #          environment = {
@@ -421,12 +432,12 @@ ccache
 #          };
           serviceConfig = {
             #these two make no difference apparently
-            #StandardOutput = "journal";
-            #StandardError = "journal";
+            StandardOutput = "journal";
+            StandardError = "journal";
+            ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround!
             Type = "oneshot";
             RemainAfterExit = "yes";
-            #soledFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's due to bash -c 'script' instead of just 'script'(which has bash shebang anyway)
-            #done(seeabove)doneFIXME: this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea. 
+            #FIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea.
             #the difference between the two is:
             #-ExecStart=/nix/store/dnziqfv7lmcdy1ns173xib1p5vrbamr2-unit-script-user_startup-start/bin/user_startup-start
             #^ has this shebang: #!/nix/store/4vzal97iq3dmrgycj8r0gflrh51p8w1s-bash-5.2p26/bin/bash
@@ -434,7 +445,7 @@ ccache
             #^ has this shebang: #!/usr/bin/env bash
             #but it's bash -c 'thescript' hmm
 
-            #ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'"; #XXX: don't use this, u won't see stdout/stderr in journalctl,status (u've to not prefix with bash -c) only when u 'restart' it manually u see it, but not when it first starts up like after a reboot!
+            #ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
             ExecStart = ''"/home/user/bin/_user startup.bash"'';
             #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too! CONFIRMED!
             #ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
