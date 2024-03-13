@@ -378,6 +378,33 @@ ccache
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
   services = {
+    journald = {
+      extraConfig = ''
+        SyncIntervalSec=20s
+        SplitMode=uid
+        Seal=yes
+        Compress=no
+        Storage=persistent
+        RateLimitBurst=0
+        RateLimitIntervalSec=0
+        SystemMaxUse=10G
+        SystemMaxFiles=1000
+        RuntimeMaxUse=3G
+        MaxRetentionSec=5month
+        MaxFileSec=1h
+        ForwardToSyslog=yes
+        ForwardToKMsg=yes
+        ForwardToConsole=yes
+        ForwardToWall=yes
+        TTYPath=/dev/tty12
+        MaxLevelStore=debug
+        MaxLevelSyslog=debug
+        MaxLevelKMsg=debug
+        MaxLevelConsole=debug
+        MaxLevelWall=emerg
+        ReadKMsg=yes
+      '';
+    };
     openssh = {
       enable=false;
     };
@@ -437,7 +464,7 @@ ccache
             ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround!
             Type = "oneshot";
             RemainAfterExit = "yes";
-            #FIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea.
+            #worksbutwasjournaldrotatedFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea. So some journal rotation is happening before the script starts logging or so it seems from dmesg, and thus they don't end up in the next log, but they do in prev., so those 2 commands can't freaking see the rotated log, so it's empty.
             #the difference between the two is:
             #-ExecStart=/nix/store/dnziqfv7lmcdy1ns173xib1p5vrbamr2-unit-script-user_startup-start/bin/user_startup-start
             #^ has this shebang: #!/nix/store/4vzal97iq3dmrgycj8r0gflrh51p8w1s-bash-5.2p26/bin/bash
