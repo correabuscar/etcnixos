@@ -259,7 +259,7 @@ self: super:
 #linuxPackages = super.linuxKernel.packages.linux_6_1;
 
 #  systemd = super.systemd.overrideAttrs (oldAttrs: {
-#      patches = oldAttrs.patches or [] ++ [
+#      patches = oldAttrs.patches or [] ++ [ #well this can't be used, it's recompiling to many other stuff like firefox,openjdk etc.
 #      ./patches/systemd_30263.patch
 #      ];
 #  });

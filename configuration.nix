@@ -50,7 +50,7 @@
   "printk.devkmsg=on"
   "gk.log.keep=true"
   "earlyprintk=vga"
-  "systemd.log_target=kmsg"
+  "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
   "systemd.journald.forward_to_console=1"
   "oops=panic"
   "panic=0"
@@ -338,7 +338,7 @@ ccache
   };
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
-  environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
+  #environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
   environment.memoryAllocator.provider="jemalloc";
   #The system-wide memory allocator.
   #
