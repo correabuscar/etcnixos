@@ -50,7 +50,8 @@
   "printk.devkmsg=on"
   "gk.log.keep=true"
   "earlyprintk=vga"
-  "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
+  #"systemd.log_target=journal" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
+#  "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
   "systemd.journald.forward_to_console=1"
   "oops=panic"
   "panic=0"
@@ -464,6 +465,7 @@ ccache
           description = "user-level startup stuff";
           path = [ pkgs.bash pkgs.coreutils ];
           #FIXME: stdout/stderr work just like the other variant: randomly! even when using script= here:
+          # with this kernel on cmdline: "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203   so with kmsg alone I'm missing Starting/Finished lines, but with journal or journal-or-kmsg they're there, however, i still get the script output lines to show only sometimes, well actually they show most of the time, but sometimes they don't show.
           #script = ''
           #echo "hi this is '$0' on stdout"
           #echo "hi this is '$0' on stderr" >&2
