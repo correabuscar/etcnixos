@@ -258,6 +258,11 @@ self: super:
 #
 #linuxPackages = super.linuxKernel.packages.linux_6_1;
 
+#  systemd = super.systemd.overrideAttrs (oldAttrs: {
+#      patches = oldAttrs.patches or [] ++ [
+#      ./patches/systemd_30263.patch
+#      ];
+#  });
 
 } #self/super
 

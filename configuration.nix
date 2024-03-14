@@ -305,7 +305,8 @@ ccache
     settings = {
       sandbox = true;
       trusted-users = [ "root" "user" ];
-      auto-optimise-store = true;
+      auto-optimise-store = true; #If set to true, Nix automatically detects files in the store that have identical contents, and replaces them with hard links to a single copy. This saves disk space. If set to false (the default), you can still run nix-store –optimise to get rid of duplicate files.
+
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];# needed for ccache
     };
 
@@ -331,7 +332,10 @@ ccache
 
   #programs.ccache.packageNames = [ "ffmpeg" ]; #"keepassxc" ]; //recompiled a lot of shie from source!
   programs.ccache.packageNames = [ "keepassxc" ]; #if pkg is in this list then it's using ccache regardless of programs.ccache.enable flag state below.
-  programs.ccache.enable = true; #doesn't affect anything
+  programs.ccache = {
+    #maxSize = "20G"; #not a thing
+    enable = true; #doesn't affect anything
+  };
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
   environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
@@ -379,31 +383,35 @@ ccache
   # services.openssh.enable = true;
   services = {
     journald = {
-      extraConfig = ''
-        SyncIntervalSec=20s
-        SplitMode=uid
-        Seal=yes
-        Compress=no
-        Storage=persistent
-        RateLimitBurst=0
-        RateLimitIntervalSec=0
-        SystemMaxUse=10G
-        SystemMaxFiles=1000
-        RuntimeMaxUse=3G
-        MaxRetentionSec=5month
-        MaxFileSec=1h
-        ForwardToSyslog=yes
-        ForwardToKMsg=yes
-        ForwardToConsole=yes
-        ForwardToWall=yes
-        TTYPath=/dev/tty12
-        MaxLevelStore=debug
-        MaxLevelSyslog=debug
-        MaxLevelKMsg=debug
-        MaxLevelConsole=debug
-        MaxLevelWall=emerg
-        ReadKMsg=yes
-      '';
+      extraConfig = "SystemMaxUse=500M";
+#      extraConfig = ''
+#        SyncIntervalSec=20s
+#        SplitMode=uid
+#        Seal=yes
+#        Compress=no
+#        Storage=persistent
+#
+#        #0 means turn off any rate limiting:
+#        RateLimitBurst=0
+#        RateLimitIntervalSec=0
+#
+#        SystemMaxUse=10G
+#        SystemMaxFiles=1000
+#        RuntimeMaxUse=3G
+#        MaxRetentionSec=5month
+#        MaxFileSec=1m
+#        ForwardToSyslog=yes
+#        ForwardToKMsg=yes
+#        ForwardToConsole=yes
+#        ForwardToWall=yes
+#        TTYPath=/dev/tty12
+#        MaxLevelStore=debug
+#        MaxLevelSyslog=debug
+#        MaxLevelKMsg=debug
+#        MaxLevelConsole=debug
+#        MaxLevelWall=emerg
+#        ReadKMsg=yes
+#      '';
     };
     openssh = {
       enable=false;
@@ -416,10 +424,19 @@ ccache
   };
 
   systemd = {
+    extraConfig = ''
+      DefaultTimeoutStopSec=10s
+      DefaultTimeoutStartSec=10s
+      DefaultCPUAccounting=yes
+      DefaultIOAccounting=yes
+      # DefaultLimitNOFILE=65535
+      DefaultMemoryAccounting=yes
+      DefaultTasksAccounting=yes
+    '';
     user = {
       services = {
         user_startup = { #initial code from unkn
-          enable = true;
+          enable = true; # it's in: /etc/systemd/user/user_startup.service
           # nvm you don't! //old: you still have to(do I? apparently not, let's test) `$ systemctl --user enable user_startup` , this enable only does: If set to false, this unit will be a symlink to /dev/null. This is primarily useful to prevent specific template instances (e.g. serial-getty@ttyS0) from being started.
           #//old: noXXX: if you change it, apparently you've to `$ systemctl --user disable user_startup` manually, before it ever sees your updated one. By "change" I mean for example switching between 'script =' and 'ExecStart =' (since you can only use one at a time)
           #Interesting, so I shouldn't have to 'enable' it, I don't remember why it was ever needed in the first place:
@@ -434,15 +451,16 @@ ccache
           #now let's see if it runs after reboot, it runs but it doesn't log stdout/stderr!
 
           #wantedBy = [ "multi-user.target" "suspend.target" ];
-          wantedBy = [ "basic.target" ];
-          after = [ "basic.target" "paths.target" "sockets.target" ];
-          wants = [ "basic.target" "paths.target" "sockets.target" ];
+          wantedBy = [ "default.target" ];
+          #wantedBy = [ "basic.target" ];
+          #after = [ "basic.target" "paths.target" "sockets.target" ];
+          #wants = [ "basic.target" "paths.target" "sockets.target" ];
           #after = [ "multi-user.target" "acpid.service" "suspend.target" ];
           #after = [ "systemd-journald.service" ]; #Failed to restart user_startup.service: Unit systemd-journald.service not found.
           #requires = [ "systemd-journald.service" ]; #Failed to restart user_startup.service: Unit systemd-journald.service not found.
-          requires = [ 
-          #"multi-user.target" #won't start at all
-          "basic.target" "paths.target" "sockets.target" ];
+          #requires = [ 
+          ##"multi-user.target" #won't start at all
+          #"basic.target" "paths.target" "sockets.target" ];
           description = "user-level startup stuff";
           path = [ pkgs.bash pkgs.coreutils ];
           #FIXME: stdout/stderr work just like the other variant: randomly! even when using script= here:
@@ -459,12 +477,12 @@ ccache
 #          };
           serviceConfig = {
             #these two make no difference apparently
-            StandardOutput = "journal";
-            StandardError = "journal";
-            ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround!
+            #StandardOutput = "journal";
+            #StandardError = "journal";
+            #ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround!
             Type = "oneshot";
             RemainAfterExit = "yes";
-            #worksbutwasjournaldrotatedFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `journalctl --user -u user_startup.service` even tho it did run! But if I manually start it then yea. So some journal rotation is happening before the script starts logging or so it seems from dmesg, and thus they don't end up in the next log, but they do in prev., so those 2 commands can't freaking see the rotated log, so it's empty.
+            #worksbutwasjournaldrotatedFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `` even tho it did run! But if I manually start it then yea. So some journal rotation is happening before the script starts logging or so it seems from dmesg, and thus they don't end up in the next log, but they do in prev., so those 2 commands can't freaking see the rotated log, so it's empty.
             #the difference between the two is:
             #-ExecStart=/nix/store/dnziqfv7lmcdy1ns173xib1p5vrbamr2-unit-script-user_startup-start/bin/user_startup-start
             #^ has this shebang: #!/nix/store/4vzal97iq3dmrgycj8r0gflrh51p8w1s-bash-5.2p26/bin/bash
