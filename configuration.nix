@@ -494,7 +494,7 @@ ccache
             #but it's bash -c 'thescript' hmm
 
             #ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
-            ExecStart = ''"/home/user/bin/_user startup.bash"''; #XXX: this script needs to end with a 'sleep 2' or less, so that stdout/stderr from it is logged in the proper place(like systemctl status, to can show) see: https://bugs.freedesktop.org/show_bug.cgi?id=50184#c2  https://github.com/systemd/systemd/issues/31800
+            ExecStart = ''"/etc/nixos/filesystem/home/user/bin/_user startup.bash"''; #XXX: this script needs to end with a 'sleep 2' or less, so that stdout/stderr from it is logged in the proper place(like systemctl status, to can show) see: https://bugs.freedesktop.org/show_bug.cgi?id=50184#c2  https://github.com/systemd/systemd/issues/31800
             #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too! CONFIRMED!
             #ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
             #nix-repl> :p pkgs.bash
@@ -524,7 +524,8 @@ ccache
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = "yes";
-          ExecStart = "${pkgs.runtimeShell} -c '/_system_startup.bash'";
+          #ExecStart = "${pkgs.runtimeShell} -c '/_system_startup.bash'";
+          ExecStart = ''"/etc/nixos/filesystem/_system startup.bash"'';
         };
       };
     }; # system-wide services
