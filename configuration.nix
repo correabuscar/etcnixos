@@ -51,8 +51,8 @@
   "gk.log.keep=true"
   "earlyprintk=vga"
   #"systemd.log_target=journal" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
-#  "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
-  "systemd.journald.forward_to_console=1"
+  "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203
+  "systemd.journald.forward_to_console=1" #this (on/off) doesn't affect the race condition in https://github.com/systemd/systemd/issues/31800
   "oops=panic"
   "panic=0"
   "print_fatal_signals=1"
@@ -384,35 +384,35 @@ ccache
   # services.openssh.enable = true;
   services = {
     journald = {
-      extraConfig = "SystemMaxUse=500M";
-#      extraConfig = ''
-#        SyncIntervalSec=20s
-#        SplitMode=uid
-#        Seal=yes
-#        Compress=no
-#        Storage=persistent
-#
-#        #0 means turn off any rate limiting:
-#        RateLimitBurst=0
-#        RateLimitIntervalSec=0
-#
-#        SystemMaxUse=10G
-#        SystemMaxFiles=1000
-#        RuntimeMaxUse=3G
-#        MaxRetentionSec=5month
-#        MaxFileSec=1m
-#        ForwardToSyslog=yes
-#        ForwardToKMsg=yes
-#        ForwardToConsole=yes
-#        ForwardToWall=yes
-#        TTYPath=/dev/tty12
-#        MaxLevelStore=debug
-#        MaxLevelSyslog=debug
-#        MaxLevelKMsg=debug
-#        MaxLevelConsole=debug
-#        MaxLevelWall=emerg
-#        ReadKMsg=yes
-#      '';
+      #extraConfig = "SystemMaxUse=500M";
+      extraConfig = ''
+        SyncIntervalSec=20s
+        SplitMode=uid
+        Seal=yes
+        Compress=no
+        Storage=persistent
+
+        #0 means turn off any rate limiting:
+        RateLimitBurst=0
+        RateLimitIntervalSec=0
+
+        SystemMaxUse=10G
+        SystemMaxFiles=1000
+        RuntimeMaxUse=3G
+        MaxRetentionSec=5month
+        MaxFileSec=1m
+        ForwardToSyslog=yes
+        ForwardToKMsg=yes
+        ForwardToConsole=yes
+        ForwardToWall=yes
+        TTYPath=/dev/tty12
+        MaxLevelStore=debug
+        MaxLevelSyslog=debug
+        MaxLevelKMsg=debug
+        MaxLevelConsole=debug
+        MaxLevelWall=emerg
+        ReadKMsg=yes
+      '';
     };
     openssh = {
       enable=false;
@@ -464,7 +464,7 @@ ccache
           #"basic.target" "paths.target" "sockets.target" ];
           description = "user-level startup stuff";
           path = [ pkgs.bash pkgs.coreutils ];
-          #FIXME: stdout/stderr work just like the other variant: randomly! even when using script= here:
+          #cantFIXME: stdout/stderr work just like the other variant: randomly! even when using script= here:
           # with this kernel on cmdline: "systemd.log_target=journal-or-kmsg" #was kmsg here which causes this issue: https://github.com/systemd/systemd/issues/30092#issuecomment-1997458203   so with kmsg alone I'm missing Starting/Finished lines, but with journal or journal-or-kmsg they're there, however, i still get the script output lines to show only sometimes, well actually they show most of the time, but sometimes they don't show.
           #script = ''
           #echo "hi this is '$0' on stdout"
@@ -472,6 +472,7 @@ ccache
           #export
           #echo "bye this is '$0' on stdout"
           #echo "bye this is '$0' on stderr" >&2
+          #sleep 2 #needed to allow enough time for systemd to query stuff and then put the stdout/stderr in the proper logs(with all the fields) see: ExecStart= 's comment below.
           #'';
 
 #          environment = {
@@ -481,7 +482,7 @@ ccache
             #these two make no difference apparently
             #StandardOutput = "journal";
             #StandardError = "journal";
-            #ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround!
+            #ExecStartPre=''${pkgs.coreutils}/bin/sleep 10''; #XXX: ok this makes stdout/stderr log properly; so it's some kind of race condition; this is the current workaround! this works but it gets our script delayed, try the other variant, put sleep 2 at end of script!
             Type = "oneshot";
             RemainAfterExit = "yes";
             #worksbutwasjournaldrotatedFIXME: stdout/stderr aren't in the log(journalctl, status) when using ExecStart= here - it's NOT due to bash -c 'script' instead of just 'script'(which has bash shebang anyway); it seems random, sometimes works sometimes doesn't, tf! So this doesn't show log on `journalctl --user -u user_startup.service` or `` even tho it did run! But if I manually start it then yea. So some journal rotation is happening before the script starts logging or so it seems from dmesg, and thus they don't end up in the next log, but they do in prev., so those 2 commands can't freaking see the rotated log, so it's empty.
@@ -493,7 +494,7 @@ ccache
             #but it's bash -c 'thescript' hmm
 
             #ExecStart = "${pkgs.bash}${pkgs.bash.shellPath} -c '/home/user/bin/_user_startup.bash'";
-            ExecStart = ''"/home/user/bin/_user startup.bash"'';
+            ExecStart = ''"/home/user/bin/_user startup.bash"''; #XXX: this script needs to end with a 'sleep 2' or less, so that stdout/stderr from it is logged in the proper place(like systemctl status, to can show) see: https://bugs.freedesktop.org/show_bug.cgi?id=50184#c2  https://github.com/systemd/systemd/issues/31800
             #doneTODO: what if path has spaces? seems like systemd's ExecStart needs double quotes too! CONFIRMED!
             #ExecStart = "${pkgs.runtimeShell} -c '/home/user/bin/_user_startup.bash'";
             #nix-repl> :p pkgs.bash
