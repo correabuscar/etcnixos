@@ -260,7 +260,7 @@ self: super:
 
 #  systemd = super.systemd.overrideAttrs (oldAttrs: {
 #      patches = oldAttrs.patches or [] ++ [ #well this can't be used, it's recompiling to many other stuff like firefox,openjdk etc.
-#      ./patches/systemd_30263.patch
+#      #./patches/systemd_30263.patch #removed from disk
 #      ];
 #  });
 
