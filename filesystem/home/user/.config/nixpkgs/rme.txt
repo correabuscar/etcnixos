@@ -1,0 +1,3 @@
+i've just symlinked this dir to the real user
+
+I don't use user but if I do, I want these to be fixed(ie. user can't write new, unless via sudo), for now.

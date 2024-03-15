@@ -9,7 +9,7 @@
   #nixpkgs.overlays = lib.mkAfter [ # XXX: required or else it's the opposite of how it work from 'nix-build' command
   #nixpkgs.overlays = [
     (import ./overlay.oxalica) #direct git clone of https://github.com/oxalica/rust-overlay.git
-    (import ./overlayu)
+    (import ./myoverlay)
 #    [ pkgs.overlays.github {
 #    owner = "oxalica";
 #    repo = "/home/user/overlays/oxalica/rust-overlay";
