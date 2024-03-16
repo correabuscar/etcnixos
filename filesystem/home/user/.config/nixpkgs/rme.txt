@@ -1,3 +1,6 @@
-i've just symlinked this dir to the real user
+i've just symlinked this dir to the real user, nope this doesn't work it need the dir to be a dir not a symlink to dir!
+so I've symlinked each file within this dir!
 
 I don't use user but if I do, I want these to be fixed(ie. user can't write new, unless via sudo), for now.
+
+

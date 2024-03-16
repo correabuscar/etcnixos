@@ -271,6 +271,7 @@ ccache
 #      };
 #    })
   hello
+  man-db
   ]; # env
 
   #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
