@@ -1,8 +1,8 @@
 self: super: {
-    #ccacheWrapper = assert 2+2 == 4; super.ccacheWrapper.override {
-    ccacheWrapper = assert 2+2 == 4; (super.ccacheWrapper.override {
+    ccacheWrapper = assert 2+2 == 4; super.ccacheWrapper.override {
+    #ccacheWrapper = assert 2+2 == 4; (super.ccacheWrapper.override {
       #cmake = self.cmake2; #this won't work here
-      }).overrideAttrs (oldAttrs: { #this line's needed to can override extraConfig, oddly enough.
+      #}).overrideAttrs (oldAttrs: { #this isn't the way to override extraConfig, it's prolly treating it as a new attribute only!
 
       # '${extraConfig}'" ''
       extraConfig = builtins.trace "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX using ccache overrides from ccache_overlay" ''
@@ -62,8 +62,8 @@ self: super: {
           exit 1
         fi
       '';
-    #};
-    });
+    };
+    #});
 
     #keepassxc = super.keepassxc.override { stdenv = super.ccacheStdenv; };
   }
