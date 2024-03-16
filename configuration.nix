@@ -223,6 +223,8 @@ keepassxc
 
 gcc
 clang
+#FIXME: warning: collision between `/nix/store/2n2ranlijkkab8xqb1y0bha8mhl6j2gk-clang-wrapper-17.0.6/bin/c++' and `/nix/store/qhpw32pz39y6i30b3vrbw5fw6zv5549f-gcc-wrapper-13.2.0/bin/c++'
+
 
 bc
 ethtool
@@ -268,6 +270,7 @@ ccache
 #      NIX_DEBUG="10"; #no effect
 #      };
 #    })
+  hello
   ]; # env
 
   #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
@@ -336,6 +339,7 @@ ccache
   "keepassxc"
   #"cmake" # infinite recursion
   #"cmake2" # unsure if it takes it, apparently it's not using ccache for it! so it doesn't take the one from my overlay
+  "hello"
   ]; #if pkg is in this list then it's using ccache regardless of programs.ccache.enable flag state below.
   programs.ccache = {
     #maxSize = "20G"; #not a thing
@@ -369,6 +373,7 @@ ccache
   };
 
   fileSystems."/home/user/vm" = {
+  #FIXME: warning: collision between `/nix/store/82jiyw9rb83za3j3xj5h3kfca3sl5ii6-mount.vboxsf/bin/mount.vboxsf' and `/nix/store/4xaxrbi1c0z0bfsr2yfsrsqvkmvm9csj-VirtualBox-GuestAdditions-7.0.14-6.6.21/bin/mount.vboxsf'
     fsType = "vboxsf";
     device = "vm";
     options = [ "rw" "nofail" ];
