@@ -335,7 +335,7 @@ ccache
   programs.ccache.packageNames = [ 
   "keepassxc"
   #"cmake" # infinite recursion
-  "cmake2" # unsure if it takes it, apparently it's not using ccache for it!
+  #"cmake2" # unsure if it takes it, apparently it's not using ccache for it! so it doesn't take the one from my overlay
   ]; #if pkg is in this list then it's using ccache regardless of programs.ccache.enable flag state below.
   programs.ccache = {
     #maxSize = "20G"; #not a thing
