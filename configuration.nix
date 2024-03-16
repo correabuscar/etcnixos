@@ -334,8 +334,8 @@ ccache
   #programs.ccache.packageNames = [ "ffmpeg" ]; #"keepassxc" ]; //recompiled a lot of shie from source!
   programs.ccache.packageNames = [ 
   "keepassxc"
-  "cmake" # infinite recursion
-  "cmake2" # infinite recursion
+  #"cmake" # infinite recursion
+  "cmake2" # unsure if it takes it, apparently it's not using ccache for it!
   ]; #if pkg is in this list then it's using ccache regardless of programs.ccache.enable flag state below.
   programs.ccache = {
     #maxSize = "20G"; #not a thing

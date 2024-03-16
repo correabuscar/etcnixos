@@ -1,11 +1,11 @@
 self: super: {
-    #ccacheWrapper = assert 2+2 == 4; super.ccacheWrapper.override {
-    ccacheWrapper = assert 2+2 == 4; (super.ccacheWrapper.override { 
-      #cmake = self.cmake2; #this won't work here
-      }).overrideAttrs (oldAttrs: {
+    ccacheWrapper = assert 2+2 == 4; super.ccacheWrapper.override {
+    #ccacheWrapper = assert 2+2 == 4; (super.ccacheWrapper.override { 
+    #  #cmake = self.cmake2; #this won't work here
+    #  }).overrideAttrs (oldAttrs: {
 
       #extraConfig = super.pkgs.lib.mkForce builtins.trace "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX some ccache shie" ''
-      extraConfig = builtins.trace "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX some ccache shie" ''
+      extraConfig = builtins.trace "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX using ccache overrides from ccache_overlay" ''
         unset CCACHE_COMPRESS
         export CCACHE_NOCOMPRESS=1
         export CCACHE_TEMPDIR="/tmp"
@@ -41,7 +41,8 @@ self: super: {
           exit 1
         fi
       '';
-    });
+    };
+    #});
 
     #keepassxc = super.keepassxc.override { stdenv = super.ccacheStdenv; };
   }
