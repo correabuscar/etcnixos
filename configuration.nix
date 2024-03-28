@@ -31,6 +31,7 @@
 #        }
     ];
 
+
   # Bootloader.
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
@@ -168,7 +169,32 @@
   };
 
   # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+#    # Define cross-compilation environment
+#    crossSystem."aarch64-unknown-linux-gnu" = {
+#      config = {
+#        targetArchitecture = "aarch64";
+#        libc = pkgs.musl;
+#      };
+#      supportedPackages = pkgs: with pkgs; [
+#        (rustPlatform.buildPackages.aarch64-unknown-linux-gnu.rust)
+#          (pkgs.cargoPlatforms.aarch64-unknown-linux-gnu.cargo)
+#      ];
+#    };
+#    crossSystem = { #seemingly no effect
+#      "aarch64-unknown-linux-gnu" = {
+#        config = {
+#          targetArchitecture = "aarch64";
+#          libc = pkgs.musl;  # or whatever libc you prefer
+#        };
+#        supportedPackages = pkgs: with pkgs; [
+#          (rustPlatform.buildPackages.aarch64-unknown-linux-gnu.rust)
+#            (pkgs.cargoPlatforms.aarch64-unknown-linux-gnu.cargo)
+#        ];
+#      };
+#    };
+  };
 
 
 #  function rustDocPath () {
@@ -209,19 +235,32 @@ mlocate
 #  }))
 
 #this rust-bin stuff uses oxalica's overlay
-(rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-  extensions = [ "rust-src" "rust-docs" "rustc-docs" ];
-  #targets = [ "arm-unknown-linux-gnueabihf" ];
-}))
+#(rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
+#  extensions = [ "rust-src" "rust-docs" "rustc-docs" ];
+#  #targets = [ "arm-unknown-linux-gnueabihf" ];
+#}))
 #rust-bin.stable."1.75.0".default  #1.75.0 but can't do -Z
 #rust-bin.nightly."2023-12-28".default  #1.75.0 nightly (55 files) no warn
 #rust-bin.nightly."2024-02-08".default #1.76.0 nightly (54 files) no warn
 #rust-bin.nightly."2024-02-28".default #1.78.0 nightly (57 files) + warning: the item `libc` is imported redundantly
+#rust-bin.nightly."2023-05-26".default # for issue: https://github.com/rust-lang/rust/issues/97181#issuecomment-2012522426
+gdb
 
+rustup 
+openssl
+openssl.dev
+#libssl
 keepassxc
 #(keepassxc.overrideAttrs(old: {NIX_DEBUG=13;})) #this affects build for keepassxc only! so this is how to set NIX_DEBUG so far!
 
 gcc
+#(pkgs.gcc
+#      .overrideAttrs (oldAttrs: {
+#        nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
+#        #        buildInputs = oldAttrs.buildInputs ++ [
+#          pkgs.gcc-cross.aarch64-linux
+#        ];
+#      }))
 clang
 #FIXME: warning: collision between `/nix/store/2n2ranlijkkab8xqb1y0bha8mhl6j2gk-clang-wrapper-17.0.6/bin/c++' and `/nix/store/qhpw32pz39y6i30b3vrbw5fw6zv5549f-gcc-wrapper-13.2.0/bin/c++'
 
@@ -230,7 +269,7 @@ bc
 ethtool
 
 #glxinfo
-#pkg-config
+pkg-config
 #pkgconf
 #xorg.libX11.dev
 #xorg.libXcursor.dev
@@ -270,8 +309,20 @@ ccache
 #      NIX_DEBUG="10"; #no effect
 #      };
 #    })
+  qemu_full
+  qemu
+  qemu.ga
+  virt-manager
+  #libvirtd
+  libvirt
+  gtk3
+  SDL
+  SDL2
+  gtk4
+  gtk2
   hello
   man-db
+  fd
   ]; # env
 
   #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
@@ -349,7 +400,9 @@ ccache
   #programs.neovim.defaultEditor=true; #FIXME: see why this doesn't work! it's still 'nano'; won't work even after a reboot!
   environment.variables.EDITOR="nvim"; #doneFIXME: still 'nano' lol? ok needed a reboot, actually a user relog (bash -l isn't enough!), instead of just starting a new terminal!
   #environment.variables.NIX_DEBUG="11"; #doesn't affect anything during build, but it's in system-wide eg. bash
-  environment.memoryAllocator.provider="jemalloc";
+  #environment.memoryAllocator.provider="jemalloc";
+  #environment.memoryAllocator.provider="graphene-hardened";
+  environment.memoryAllocator.provider="libc";
   #The system-wide memory allocator.
   #
   #Briefly, the system-wide memory allocator providers are:
@@ -387,6 +440,10 @@ ccache
   #   enable = true;
   #   enableSSHSupport = true;
   # };
+
+  programs.virt-manager.enable = true;
+  virtualisation.libvirtd.enable = true;
+
 
   # List services that you want to enable:
 
@@ -572,6 +629,7 @@ ccache
       iptables -N TCP || iptables -F TCP #create or flush the 'TCP'(named) chain - both are needed else fail or appending to prev. ones!
 #FIXME: this 443 has to be in two places, one here and one in OUTPUT, see why
       iptables -A TCP -p tcp --dport 443 -j ACCEPT
+#      iptables -A TCP -p tcp --dport 80 -d 50.116.36.110 -j ACCEPT
       iptables -A TCP -p tcp --dport 22 -j ACCEPT
       iptables -A TCP -j LOG --log-prefix "TCPchaindropped:" --log-level 7 --log-uid
       iptables -A TCP -i lo -s 127.0.0.1/8 -d 127.0.0.1/8 -j ACCEPT  #NOTE that on INPUT all 0/0 is accepted on 'lo' if it were to reach nixos-fw chain but it reaches TCP one instead now.
@@ -581,6 +639,8 @@ ccache
       iptables -A OUTPUT -p udp --dport 53 -d 10.0.2.3 -j ACCEPT
 #      iptables -A OUTPUT -p udp --dport 443 -j ACCEPT
       iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+#      iptables -A OUTPUT -p tcp --dport 80 -d 50.116.36.110 -j ACCEPT
+#      iptables -A OUTPUT -p tcp --dport 80 -d 209.222.17.72 -j ACCEPT
       iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 #      iptables -A OUTPUT -p tcp -d nixos.org --dport 443 -j ACCEPT #it won't resolve at all!
 
