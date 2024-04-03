@@ -324,6 +324,7 @@ ccache
   man-db
   fd
   llvm
+  mybin
   ]; # env
 
   #xserver.videoDrivers = lib.mkOverride 10 [ "vmware" ];
@@ -383,7 +384,10 @@ ccache
     };
     guest = {
       enable = true;
-      x11 = true;
+      #x11 = true; #this got removed upstream, it existed in 23.11 tho.
+      draganddrop=false;
+      clipboard=true;
+      seamless=false;
     };
   };
 
@@ -664,29 +668,29 @@ ccache
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.11"; # Did you read the comment?
 
-    #initially from: https://github.com/NixOS/nixpkgs/issues/300055#issuecomment-2034546410
-    #dno if and how this works atm, but it takes like 3min to do if the block was commented out before.
-    system.replaceRuntimeDependencies = [({
-        original = pkgs.xz;
-        replacement = pkgs.xz.overrideAttrs (finalAttrs: prevAttrs: {
-        #(rec {
-            version = "5.4.6";
-            src = pkgs.fetchurl {
-            url = with finalAttrs;
-            # The original URL has been taken down.
-            # "https://github.com/tukaani-project/xz/releases/download/v${version}/xz-${version}.tar.bz2";
-            "mirror://sourceforge/lzmautils/xz-5.4.6.tar.bz2";
-            sha256 = "sha256-kThRsnTo4dMXgeyUnxwj6NvPDs9uc6JDbcIXad0+b0k=";
-            };
-
-#Can't use this due to no Makefile or something like that:
-#            src = pkgs.fetchgit {
-#            url = "https://git.tukaani.org/xz.git";
-#            rev = "v${finalAttrs.version}";
-#            hash = "sha256-uMUwR1I42R4hip5bJ1KOBKLZd9bb683z7xKeyB3M1Qg=";
+#    #initially from: https://github.com/NixOS/nixpkgs/issues/300055#issuecomment-2034546410
+#    #FIXME: dno if and how this works atm, but it takes like 3min to do if the block was commented out before.
+#    system.replaceRuntimeDependencies = [({
+#        original = pkgs.xz;
+#        replacement = pkgs.xz.overrideAttrs (finalAttrs: prevAttrs: {
+#        #(rec {
+#            version = "5.4.6";
+#            src = pkgs.fetchurl {
+#            url = with finalAttrs;
+#            # The original URL has been taken down.
+#            # "https://github.com/tukaani-project/xz/releases/download/v${version}/xz-${version}.tar.bz2";
+#            "mirror://sourceforge/lzmautils/xz-5.4.6.tar.bz2";
+#            sha256 = "sha256-kThRsnTo4dMXgeyUnxwj6NvPDs9uc6JDbcIXad0+b0k=";
 #            };
-            });
-        })];
+#
+##Can't use this due to no Makefile or something like that:
+##            src = pkgs.fetchgit {
+##            url = "https://git.tukaani.org/xz.git";
+##            rev = "v${finalAttrs.version}";
+##            hash = "sha256-uMUwR1I42R4hip5bJ1KOBKLZd9bb683z7xKeyB3M1Qg=";
+##            };
+#            });
+#        })];
 
 }
 # vim: set tabstop=2 shiftwidth=2 expandtab :
