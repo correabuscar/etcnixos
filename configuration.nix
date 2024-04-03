@@ -692,5 +692,17 @@ ccache
 #            });
 #        })];
 
+    #initially from: https://github.com/NixOS/nixpkgs/issues/300055#issuecomment-2034546410
+    #this works, well 'mybin' will use this variant of rebuilt mylib, without 'mybin' getting rebuilt.
+    system.replaceRuntimeDependencies = [({
+        original = pkgs.mylib;
+        replacement = pkgs.mylib.overrideAttrs (finalAttrs: prevAttrs: {
+        #(rec {
+            version = "0.1.3";
+            patches = prevAttrs.patches or [] ++ [
+              ./myoverlay/patches/testing1.patch
+            ];
+            });
+        })];
 }
 # vim: set tabstop=2 shiftwidth=2 expandtab :

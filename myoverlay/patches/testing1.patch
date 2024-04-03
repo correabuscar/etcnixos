@@ -1,0 +1,13 @@
+diff --git a/myoverlay/rustdylibusage/mylib/src/lib.rs b/myoverlay/rustdylibusage/mylib/src/lib.rs
+index e1077a6..ea57df0 100644
+--- mylib/src/lib.rs
++++ mylib/src/lib.rs
+@@ -6,7 +6,7 @@ pub fn add(left: usize, right: usize) -> usize {
+ pub fn greet(name: &str) {
+ //#[no_mangle]
+ //pub extern "C" fn greet(name: *const std::os::raw::c_char) {
+-    println!("Hello, {}!", name);
++    println!("hAllo, {}!", name);
+ }
+ 
+ 
