@@ -324,6 +324,8 @@ ccache
   man-db
   fd
   llvm
+  hdparm
+
   mybin
   ]; # env
 
