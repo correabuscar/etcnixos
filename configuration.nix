@@ -219,7 +219,12 @@ neovim
 mc
 git
 jetbrains.rust-rover
-#rustup
+rustup
+#src: https://stackoverflow.com/questions/77680023/rust-compiling-to-windows-not-working-under-nixos
+pkgsCross.mingwW64.stdenv.cc
+pkgsCross.mingwW64.windows.pthreads
+#XXX:^ that's what's needed to can compile from nixos to windows, rustc target is x86_64-pc-windows-gnu, and of course: $ rustup target add x86_64-pc-windows-gnu
+
 #rust-rover
 #  (jetbrains.rust-rover.overrideAttrs {
 #    src = pkgs.fetchurl {
@@ -246,7 +251,6 @@ mlocate
 #rust-bin.nightly."2023-05-26".default # for issue: https://github.com/rust-lang/rust/issues/97181#issuecomment-2012522426
 gdb
 
-rustup 
 openssl
 openssl.dev
 #libssl
