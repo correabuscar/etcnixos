@@ -218,12 +218,16 @@ neovim
 #nano #FIXME: this gets installed anyway! and EDITOR=nano too!
 mc
 git
+#TODO: there's a foobar2000 package at: https://github.com/emmanuelrosa/erosanix/blob/master/pkgs/foobar2000.nix
 jetbrains.rust-rover
 rustup
 #src: https://stackoverflow.com/questions/77680023/rust-compiling-to-windows-not-working-under-nixos
 pkgsCross.mingwW64.stdenv.cc
 pkgsCross.mingwW64.windows.pthreads
 #XXX:^ that's what's needed to can compile from nixos to windows, rustc target is x86_64-pc-windows-gnu, and of course: $ rustup target add x86_64-pc-windows-gnu
+#and to run that rust program in wine, you can do this:
+#wine #this is 32 bits, bad!
+(pkgs.wine.override { wineBuild = "wine64"; }) #this is 64 bits, good! thanks to: https://github.com/NixOS/nixpkgs/issues/50615#issuecomment-439732094
 
 #rust-rover
 #  (jetbrains.rust-rover.overrideAttrs {
