@@ -204,6 +204,7 @@
     cp="cp -i";
     mv="mv -i";
     v = "nvim";
+    mc = "source /etc/nixos/myoverlay/bin/mc-wrapper.sh";
     rustupdoc="firefox /run/current-system/sw/share/doc/rust/html/index.html";
     #rustupdoc = "firefox $(rustDocPath)";
   };
@@ -229,6 +230,9 @@ pkgsCross.mingwW64.windows.pthreads
 #wine #this is 32 bits, bad!
 (pkgs.wine.override { wineBuild = "wine64"; }) #this is 64 bits, good! thanks to: https://github.com/NixOS/nixpkgs/issues/50615#issuecomment-439732094
 
+
+#ncurses.dev
+#ncurses
 #rust-rover
 #  (jetbrains.rust-rover.overrideAttrs {
 #    src = pkgs.fetchurl {
